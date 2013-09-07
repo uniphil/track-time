@@ -149,3 +149,147 @@ none
 
 
 
+### GET /projects/
+
+get a list of all projects
+
+#### Parameters
+
+todo: implement paging (and filtering?)
+
+#### Returns
+
+200 ok
+
+```json
+[
+  {
+    "name": "string",
+    "ref": "uri for the project",
+    "started": "iso date",
+    "total": "total time on project in seconds"
+  },
+  ...
+]
+```
+
+
+### POST /projects/
+
+create a new project
+
+#### Parameters
+
+  * *name*: a string (required)
+
+#### Returns
+
+303 see other (redirects to the new resource)
+
+
+### GET /projects/<id>
+
+get project details
+
+#### Parameters
+
+none
+
+#### Returns
+
+200 ok
+
+```json
+{
+  "name": "string",
+  "ref": "uri for the project",
+  "started": "iso date",
+  "total": "total time on project in seconds"
+  "tasks": [
+    {
+      "ref": "uri to the task",
+      "date": "iso date",
+      "duration": "duration of the task in seconds",
+      "description": "string"
+    },
+    ...
+  ]
+}
+```
+
+
+### PUT /projects/<id>
+
+update a project
+
+#### Parameters
+
+  * *name*: a string (required)
+
+#### Returns
+
+200 ok
+```json
+{
+  "name": "string",
+  "ref": "uri for the project",
+  "started": "iso date",
+  "total": "total time on project in seconds"
+  "tasks": [
+    {
+      "ref": "uri to the task",
+      "date": "iso date",
+      "duration": "duration of the task in seconds",
+      "description": "string"
+    },
+    ...
+  ]
+}
+```
+
+
+### PATCH /projects/<id>
+
+update part of a task -- redundant with PUT since there is only the `name`.
+
+#### Parameters
+
+  * *replace*: "name" (required)
+  * *value*: the new name (required)
+
+note: `add` and `remove` are only valid for the "project" key.
+
+#### Returns
+
+200 ok
+```json
+{
+  "name": "string",
+  "ref": "uri for the project",
+  "started": "iso date",
+  "total": "total time on project in seconds"
+  "tasks": [
+    {
+      "ref": "uri to the task",
+      "date": "iso date",
+      "duration": "duration of the task in seconds",
+      "description": "string"
+    },
+    ...
+  ]
+}
+```
+
+
+### DELETE /projects/<id>
+
+delete a project. tasks with this project will have an empty project.
+
+#### Parameters
+
+none
+
+#### Returns
+
+204 no content
+
