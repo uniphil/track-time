@@ -76,11 +76,13 @@ class MongoStore(object):
         except KeyError:
             raise NotFoundError('this looks like an unsaved document (missing'
                                 ' id)')
-        self.collection.update(to_save)
+        self.collection.save(to_save)
 
     def remove(self, id):
         oid = self._id_to_oid(id)
-        self.collection.remove(oid)
+        result = self.collection.remove(oid)
+        if result.get('n') == 0:
+            raise NotFoundError('could not find the document {}'.format(id))
 
 
 tasks = MongoStore(data_config.get('tasks_collection', 'tasks'))

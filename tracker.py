@@ -64,6 +64,13 @@ class Resource(object):
         self._autometa_func = func
         return func
 
+    def _get_model(self, id):
+        try:
+            document = self.model.get(id)
+        except data.NotFoundError:
+            abort(404)
+        return document
+
     def index(self):
         filter = {}
         models = self.model.filter(**filter)
@@ -77,24 +84,34 @@ class Resource(object):
         return jsonify(polished)
 
     def get(self, id):
-        task = self.model.get(id)
+        task = self._get_model(id)
         polished = self._clean_outgoing_func(task)
         return jsonify(polished)
 
     def put(self, id):
-        pass
+        validated_updates = self._clean_incoming_func(request.form)
+        task = self._get_model(id)
+        task.update(validated_updates)
+        self.model.save(task)
+        polished = self._clean_outgoing_func(task)
+        return jsonify(polished)
 
     def patch(self, id):
         pass
 
     def delete(self, id):
-        pass
+        try:
+            self.model.remove(id)
+        except data.NotFoundError:
+            abort(404)
+        # TODO: fix response
+        return jsonify({'message': 'deleted'})
 
 
 tasks_resource = Resource('tasks', '/tasks/', data.tasks)
 
 @tasks_resource.clean_incoming
-def task_rest_to_data(incoming, should_have_ref=False):
+def task_rest_to_data(incoming):
     invalid = lambda message: 'Invalid task: {}'.format(message)
 
     # 1. validate
@@ -102,18 +119,18 @@ def task_rest_to_data(incoming, should_have_ref=False):
     assert 'description' in incoming, missing('description')
     assert 'duration' in incoming, missing('duration')
     assert 'date' in incoming, missing('date')
-    if should_have_ref:
-        assert 'ref' in incoming, missing('ref')
 
     # 2. clean
     cleaned = {}
     cleaned['description'] = incoming['description']
-    assert incoming['duration'].isdigit(), invalid('duration must be an int')
-    cleaned['duration'] = int(incoming['duration'])
+    try:
+        cleaned['duration'] = int(incoming['duration'])
+    except ValueError as ve:
+        raise AssertionError('duration: {}'.format(ve))
     try:
         cleaned['date'] = dateutil.parser.parse(incoming['date'])
     except ValueError as ve:
-        raise AssertionError(invalid('date: {}'.format(ve.message)))
+        raise AssertionError(invalid('date: {}'.format(ve)))
     if 'project' in incoming:
         project_matches = data.projects.filter(name=incoming['project'])
         if project_matches:
@@ -125,9 +142,6 @@ def task_rest_to_data(incoming, should_have_ref=False):
     else:
         project = None
     cleaned['project'] = project
-    if should_have_ref:
-        assert '/' in incoming['ref'], invalid('ref: should have "/"')
-        cleaned['id'] = incoming['ref'].rsplit('/', 1)[-1]
 
     # 3. hooray
     return cleaned
