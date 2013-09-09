@@ -11,8 +11,12 @@
 """
 
 from functools import wraps
-from flask import Flask, request, render_template, abort, jsonify
+from datetime import datetime
+import dateutil.parsers
+
+from flask import Flask, request, render_template, url_for, abort, jsonify
 from flask.views import MethodView
+
 import data
 from config import configure_app
 
@@ -21,39 +25,18 @@ app = Flask(__name__)
 configure_app(app)
 
 
-mime_map = {
-    'text/html': 'html',
-    'application/json': 'json',
-}
-
-
-def acceptable(**type_render):
-    def wrapper(func):
-        @wraps(func)
-        def responder(*args, **kwargs):
-            accepted = (m for m, s in mime_map.items() if s in type_render)
-            wants = request.accept_mimetypes.best_match(accepted)
-            if wants is None:
-                abort(406)  # unacceptable type
-            stuff = func(*args, **kwargs)
-            return type_render[mime_map[wants]](stuff)
-        return responder
-    return wrapper
-
-
-jinja2 = lambda template: lambda stuff: render_template(template, stuff=stuff)
-
-
 @app.route('/')
-@acceptable(html=jinja2('hello.html'))
 def hello():
-    return {}
+    return render_template('hello.html')
 
 
 class Resource(object):
 
     def __init__(self, name, url_prefix, model):
         self.model = model
+        self.format = None
+        self.filters = None
+        self._autometa_func = None
 
         id_url = '{}<id>'.format(url_prefix)
         ep = lambda part: '{}.{}'.format(name, part)
@@ -64,24 +47,20 @@ class Resource(object):
         app.add_url_rule(id_url, ep('patch'), self.patch, methods=['PATCH'])
         app.add_url_rule(id_url, ep('delete'), self.delete, methods=['DELETE'])
 
-        self._full_validator_func = None
-        self._patch_validator_func = None
-        self._filter_validator_func = None
-
-    def full_validator(self, func):
-        self._full_validator_func = func
+    def autometa(self, func):
+        self._autometa_func = func
         return func
 
-    def patch_validator(self, func):
-        self._patch_validator_func = func
-        return func
+    def _clean(self, params):
+        pass
 
-    def filter_validator(self, func):
-        self._filter_validator_func = func
-        return func
+    def _format(self, stuff):
+        pass
 
     def index(self):
-        pass
+        filter = {}
+        all_of_them = self.model.filter(**filter)
+        return jsonify(all_of_them)
 
     def post(self):
         pass
@@ -99,34 +78,56 @@ class Resource(object):
         pass
 
 
+required = lambda thing: len(thing) > 0
+absent = lambda thing: thing is None
+
+
+def inflate_project(name):
+    matches = data.projects.filter(name=name)
+    if matches:
+        project = matches[0]
+    else:
+        new_project = {'name': name}
+        project = data.projects.save_new(new_project)
+    return project
+
+
+def project_fix_refs(proj):
+    if not proj:
+        return {'name': None,
+                'ref': None}
+    oid = proj['_oid']
+    ref = url_for('projects.get', id=str(oid))
+    return {'name': proj['name'],
+            'ref': ref}
+
+
 tasks_resource = Resource('tasks', '/tasks/', data.tasks)
+
+tasks_resource.format = {
+    'description': dict(validate=[required]),
+    'duration': dict(validate=[required], convert_in=('duration', int)),
+    'project': dict(validate=[],
+                    convert_in=inflate_project,
+                    convert_out=project_fix_refs),
+    'date': dict(validate=[required],
+                 convert_in=('date', lambda s: dateutil.parser.parse(s))),
+    'ref': dict(validate=[],
+                convert_in=('id', lambda s: s.rsplit('/', 1)[-1])),
+}
+
+@tasks_resource.autometa
+def task_autometa(task):
+    if 'recorded' not in task:
+        task['recorded'] = datetime.now()
+    return task
+
+
 projects_resource = Resource('projects', '/projects/', data.projects)
 
-
-@tasks_resource.full_validator
-def validate_task(task):
-    pass
-
-@tasks_resource.patch_validator
-def validate_task_patch(patch):
-    pass
-
-@tasks_resource.filter_validator
-def validate_task_filter(filter):
-    pass
-
-
-@projects_resource.full_validator
-def validate_project(project):
-    pass
-
-@projects_resource.patch_validator
-def validate_project_patch(patch):
-    pass
-
-@projects_resource.filter_validator
-def validate_project_filter(filter):
-    pass
+projects_resource.format = {
+    'name': dict(validate=[required])
+}
 
 
 if __name__ == '__main__':
