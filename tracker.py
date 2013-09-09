@@ -12,7 +12,7 @@
 
 from functools import wraps
 from datetime import datetime
-import dateutil.parsers
+import dateutil.parser
 
 from flask import Flask, request, render_template, url_for, abort, jsonify
 from flask.views import MethodView
@@ -33,11 +33,12 @@ def hello():
 class Resource(object):
 
     def __init__(self, name, url_prefix, model):
+        self.name = name
         self.model = model
-        self.format = None
-        self.filters = None
+        self._clean_incoming_func = None
+        self._clean_outgoing_func = None
+        self._clean_filters_func = None
         self._autometa_func = None
-
         id_url = '{}<id>'.format(url_prefix)
         ep = lambda part: '{}.{}'.format(name, part)
         app.add_url_rule(url_prefix, ep('index'), self.index, methods=['GET'])
@@ -47,26 +48,38 @@ class Resource(object):
         app.add_url_rule(id_url, ep('patch'), self.patch, methods=['PATCH'])
         app.add_url_rule(id_url, ep('delete'), self.delete, methods=['DELETE'])
 
+    def clean_incoming(self, func):
+        self._clean_incoming_func = func
+        return func
+
+    def clean_outgoing(self, func):
+        self._clean_outgoing_func = func
+        return func
+
+    def clean_filters(self, func):
+        self._clean_filters_func = func
+        return func
+
     def autometa(self, func):
         self._autometa_func = func
         return func
 
-    def _clean(self, params):
-        pass
-
-    def _format(self, stuff):
-        pass
-
     def index(self):
         filter = {}
-        all_of_them = self.model.filter(**filter)
-        return jsonify(all_of_them)
+        models = self.model.filter(**filter)
+        polished = [self._clean_outgoing_func(t) for t in models]
+        return jsonify({self.name: polished})
 
     def post(self):
-        pass
+        stuff = self._clean_incoming_func(request.form)
+        saved = self.model.save_new(stuff)
+        polished = self._clean_outgoing_func(saved)
+        return jsonify(polished)
 
     def get(self, id):
-        pass
+        task = self.model.get(id)
+        polished = self._clean_outgoing_func(task)
+        return jsonify(polished)
 
     def put(self, id):
         pass
@@ -78,43 +91,60 @@ class Resource(object):
         pass
 
 
-required = lambda thing: len(thing) > 0
-absent = lambda thing: thing is None
-
-
-def inflate_project(name):
-    matches = data.projects.filter(name=name)
-    if matches:
-        project = matches[0]
-    else:
-        new_project = {'name': name}
-        project = data.projects.save_new(new_project)
-    return project
-
-
-def project_fix_refs(proj):
-    if not proj:
-        return {'name': None,
-                'ref': None}
-    oid = proj['_oid']
-    ref = url_for('projects.get', id=str(oid))
-    return {'name': proj['name'],
-            'ref': ref}
-
-
 tasks_resource = Resource('tasks', '/tasks/', data.tasks)
 
-tasks_resource.format = {
-    'description': dict(validate=[required]),
-    'duration': dict(validate=[required], convert_in=('duration', int)),
-    'project': dict(validate=[],
-                    convert_in=inflate_project,
-                    convert_out=project_fix_refs),
-    'date': dict(validate=[required],
-                 convert_in=('date', lambda s: dateutil.parser.parse(s))),
-    'ref': dict(validate=[],
-                convert_in=('id', lambda s: s.rsplit('/', 1)[-1])),
-}
+@tasks_resource.clean_incoming
+def task_rest_to_data(incoming, should_have_ref=False):
+    invalid = lambda message: 'Invalid task: {}'.format(message)
+
+    # 1. validate
+    missing = lambda thing: invalid('missing {}'.format(thing))
+    assert 'description' in incoming, missing('description')
+    assert 'duration' in incoming, missing('duration')
+    assert 'date' in incoming, missing('date')
+    if should_have_ref:
+        assert 'ref' in incoming, missing('ref')
+
+    # 2. clean
+    cleaned = {}
+    cleaned['description'] = incoming['description']
+    assert incoming['duration'].isdigit(), invalid('duration must be an int')
+    cleaned['duration'] = int(incoming['duration'])
+    try:
+        cleaned['date'] = dateutil.parser.parse(incoming['date'])
+    except ValueError as ve:
+        raise AssertionError(invalid('date: {}'.format(ve.message)))
+    if 'project' in incoming:
+        project_matches = data.projects.filter(name=incoming['project'])
+        if project_matches:
+            project = project_matches[0]
+        else:
+            # WARNING: possible race condition
+            new_project = {'name': incoming['project']}
+            project = data.projects.save_new(new_project)
+    else:
+        project = None
+    cleaned['project'] = project
+    if should_have_ref:
+        assert '/' in incoming['ref'], invalid('ref: should have "/"')
+        cleaned['id'] = incoming['ref'].rsplit('/', 1)[-1]
+
+    # 3. hooray
+    return cleaned
+
+@tasks_resource.clean_outgoing
+def task_data_to_rest(outgoing):
+    cleaned = outgoing.copy()
+    id = cleaned.pop('id')
+    cleaned['ref'] = url_for('tasks.get', id=id)
+    if not cleaned['project']:
+        project = {'name': None, 'ref': None}
+    else:
+        oid = cleaned['project']['_oid']
+        ref = url_for('projects.get', id=str(oid))
+        project = {'name': proj['name'], 'ref': ref}
+    cleaned['project'] = project
+    return cleaned
 
 @tasks_resource.autometa
 def task_autometa(task):
@@ -124,10 +154,6 @@ def task_autometa(task):
 
 
 projects_resource = Resource('projects', '/projects/', data.projects)
-
-projects_resource.format = {
-    'name': dict(validate=[required])
-}
 
 
 if __name__ == '__main__':

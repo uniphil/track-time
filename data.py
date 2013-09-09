@@ -48,28 +48,26 @@ class MongoStore(object):
         return thing
 
     def get(self, id):
-        oid = selff._id_to_oid(id)
+        oid = self._id_to_oid(id)
         document = self.collection.find_one(oid)
         if document is None:
             raise NotFoundError('Could not find for id: {}'.format(id))
-        id_document = _oid_to_id(document)
+        id_document = self._oid_to_id(document)
         return id_document
 
     def filter(self, **filters):
         search_filters = filters.copy()
         if 'id' in search_filters:
-            oid = selff._id_to_oid(search_filters.pop('id'))
+            oid = self._id_to_oid(search_filters.pop('id'))
             search_filters['_id'] = oid
         documents = self.collection.find(search_filters)
         id_documents = map(self._oid_to_id, documents)
         return id_documents
 
     def save_new(self, thing):
-        oid = self.collection.insert(thing)
-        new_thing = thing.copy()
-        id = self._oid_to_id(oid)
-        new_thing.update(id=id)
-        return new_thing
+        self.collection.insert(thing)
+        converted = self._oid_to_id(thing)
+        return converted
 
     def save(self, thing):
         to_save = thing.copy()
