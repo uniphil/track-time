@@ -79,21 +79,25 @@ class Resource(object):
 
     def post(self):
         stuff = self._clean_incoming_func(request.form)
+        if self._autometa_func:
+            stuff = self._autometa_func(stuff)
         saved = self.model.save_new(stuff)
         polished = self._clean_outgoing_func(saved)
         return jsonify(polished)
 
     def get(self, id):
-        task = self._get_model(id)
-        polished = self._clean_outgoing_func(task)
+        stuff = self._get_model(id)
+        polished = self._clean_outgoing_func(stuff)
         return jsonify(polished)
 
     def put(self, id):
         validated_updates = self._clean_incoming_func(request.form)
-        task = self._get_model(id)
-        task.update(validated_updates)
-        self.model.save(task)
-        polished = self._clean_outgoing_func(task)
+        stuff = self._get_model(id)
+        if self._autometa_func:
+            stuff = self._autometa_func(stuff)
+        stuff.update(validated_updates)
+        self.model.save(stuff)
+        polished = self._clean_outgoing_func(stuff)
         return jsonify(polished)
 
     def patch(self, id):
@@ -106,6 +110,17 @@ class Resource(object):
             abort(404)
         # TODO: fix response
         return jsonify({'message': 'deleted'})
+
+
+def get_or_create_project(name):
+    try:
+        project = data.projects.get(name=name)
+    except data.NotFoundError:
+        # WARNING: possible race condition
+        new_project = {'name': incoming['project']}
+        project = data.projects.save_new(new_project)
+    return project
+
 
 
 tasks_resource = Resource('tasks', '/tasks/', data.tasks)
@@ -132,13 +147,7 @@ def task_rest_to_data(incoming):
     except ValueError as ve:
         raise AssertionError(invalid('date: {}'.format(ve)))
     if 'project' in incoming:
-        project_matches = data.projects.filter(name=incoming['project'])
-        if project_matches:
-            project = project_matches[0]
-        else:
-            # WARNING: possible race condition
-            new_project = {'name': incoming['project']}
-            project = data.projects.save_new(new_project)
+        project = get_or_create_project(incoming['project'])
     else:
         project = None
     cleaned['project'] = project
@@ -154,9 +163,9 @@ def task_data_to_rest(outgoing):
     if not cleaned['project']:
         project = {'name': None, 'ref': None}
     else:
-        oid = cleaned['project']['_oid']
+        oid = cleaned['project']['id']
         ref = url_for('projects.get', id=str(oid))
-        project = {'name': proj['name'], 'ref': ref}
+        project = {'name': cleaned['project']['name'], 'ref': ref}
     cleaned['project'] = project
     return cleaned
 
@@ -168,6 +177,20 @@ def task_autometa(task):
 
 
 projects_resource = Resource('projects', '/projects/', data.projects)
+
+@projects_resource.clean_incoming
+def project_rest_to_data(incoming):
+    invalid = lambda message: 'Invalid project: {}'.format(message)
+    assert 'name' in incoming, invalid('missing name')
+    cleaned = {'name': incoming['name']}
+    return cleaned
+
+@projects_resource.clean_outgoing
+def project_data_to_rest(outgoing):
+    cleaned = outgoing.copy()
+    id = cleaned.pop('id')
+    cleaned['ref'] = url_for('projects.get', id=id)
+    return cleaned
 
 
 if __name__ == '__main__':

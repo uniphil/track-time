@@ -47,9 +47,13 @@ class MongoStore(object):
         thing['id'] = str(thing.pop('_id'))
         return thing
 
-    def get(self, id):
-        oid = self._id_to_oid(id)
-        document = self.collection.find_one(oid)
+    def get(self, id=None, **filters):
+        if id:
+            oid = self._id_to_oid(id)
+            query = {'_id': oid}
+        else:
+            query = filters
+        document = self.collection.find_one(query)
         if document is None:
             raise NotFoundError('Could not find for id: {}'.format(id))
         id_document = self._oid_to_id(document)
