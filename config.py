@@ -14,9 +14,14 @@
     copyright: whatever 2013
 """
 
-__all__ = ('hello')
+__all__ = ('configure_app', 'data_config')
 
-hello = lambda: 0
 
 def configure_app(app):
     app.debug = True
+
+
+data_config = dict(mongoclient={},
+                   dbname='timetracker')
+                   # tasks_collection='tasks'
+                   # projects_collection='projects'
