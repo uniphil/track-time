@@ -78,7 +78,7 @@ class Resource(object):
         return jsonify({self.name: polished})
 
     def post(self):
-        stuff = self._clean_incoming_func(request.form)
+        stuff = self._clean_incoming_func(request.get_json())
         if self._autometa_func:
             stuff = self._autometa_func(stuff)
         saved = self.model.save_new(stuff)
@@ -91,7 +91,7 @@ class Resource(object):
         return jsonify(polished)
 
     def put(self, id):
-        validated_updates = self._clean_incoming_func(request.form)
+        validated_updates = self._clean_incoming_func(request.get_json())
         stuff = self._get_model(id)
         if self._autometa_func:
             stuff = self._autometa_func(stuff)
@@ -117,7 +117,7 @@ def get_or_create_project(name):
         project = data.projects.get(name=name)
     except data.NotFoundError:
         # WARNING: possible race condition
-        new_project = {'name': incoming['project']}
+        new_project = {'name': name}
         project = data.projects.save_new(new_project)
     return project
 
@@ -159,13 +159,13 @@ def task_rest_to_data(incoming):
 def task_data_to_rest(outgoing):
     cleaned = outgoing.copy()
     id = cleaned.pop('id')
-    cleaned['ref'] = url_for('tasks.get', id=id)
+    cleaned['href'] = url_for('tasks.get', id=id)
     if not cleaned['project']:
-        project = {'name': None, 'ref': None}
+        project = {'name': None, 'href': None}
     else:
         oid = cleaned['project']['id']
-        ref = url_for('projects.get', id=str(oid))
-        project = {'name': cleaned['project']['name'], 'ref': ref}
+        href = url_for('projects.get', id=str(oid))
+        project = {'name': cleaned['project']['name'], 'href': href}
     cleaned['project'] = project
     return cleaned
 
@@ -189,7 +189,7 @@ def project_rest_to_data(incoming):
 def project_data_to_rest(outgoing):
     cleaned = outgoing.copy()
     id = cleaned.pop('id')
-    cleaned['ref'] = url_for('projects.get', id=id)
+    cleaned['href'] = url_for('projects.get', id=id)
     return cleaned
 
 
