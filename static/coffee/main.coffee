@@ -51,12 +51,12 @@ TaskView = Backbone.View.extend
 
   events:
     'click .task-edit': 'edit'
-    'click .task-remove': 'goodbye'
+    'click .task-remove': 'clear'
     'click .task-save': 'close'
 
   initialize: () ->
     this.listenTo this.model, 'change', this.render
-    this.listenTo this.model, 'destroy', this.goodbye
+    this.listenTo this.model, 'destroy', this.remove
 
   render: () ->
     this.$el.html this.template this.model.attributes
@@ -74,7 +74,7 @@ TaskView = Backbone.View.extend
       project:
         name: this.$('.task-project').text()
 
-  goodbye: () ->
+  clear: () ->
     this.model.destroy()
 
 
