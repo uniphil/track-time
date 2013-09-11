@@ -124,6 +124,9 @@ AppView = Backbone.View.extend
       date: this.new_form.date.val()
       project:
         name: this.new_form.project.val()
+    _(this.new_form).each (thing) ->
+      thing.val('')
+
 
 
 App = new AppView
