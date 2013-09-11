@@ -51,12 +51,12 @@ TaskView = Backbone.View.extend
 
   events:
     'click .task-edit': 'edit'
-    'click .task-remove': 'remove'
+    'click .task-remove': 'goodbye'
     'click .task-save': 'close'
 
   initialize: () ->
     this.listenTo this.model, 'change', this.render
-    this.listenTo this.model, 'destroy', this.remove
+    this.listenTo this.model, 'destroy', this.goodbye
 
   render: () ->
     this.$el.html this.template this.model.attributes
@@ -74,7 +74,7 @@ TaskView = Backbone.View.extend
       project:
         name: this.$('.task-project').text()
 
-  remove: () ->
+  goodbye: () ->
     this.model.destroy()
 
 
@@ -124,51 +124,3 @@ AppView = Backbone.View.extend
 
 App = new AppView
 
-
-
-
-# TaskListView = Backbone.View.extend
-#   tagName: 'ul'
-#   initialize: () ->
-#     _.bindAll this, 'render', 'taskRemoved'
-#     this.collection = new TaskList()
-#     this.collection.bind 'destroy', this.taskRemoved
-#     this.collection.fetch success: this.render
-#   taskRemoved: () ->
-#     console.log 'task removed?'
-#     this.render()
-#   render: () ->
-#     this.$el.empty()
-#     self = this
-#     this.collection.each (task) ->
-#       view = new TaskView model: task
-#       self.$el.append view.el
-
-
-# TaskEditView = Backbone.View.extend
-#   tagName: 'div'
-#   task: null
-#   initialize: () ->
-#     _.bindAll this, 'render', 'addTask'
-#     this.task_view = new TaskView model: new Task()
-#     this.render()
-#   events:
-#     'click button[type=submit]': 'addTask'
-#   addTask: () ->
-#     new_task = new Task
-#       duration: $('#duration', this.el).val()
-#       description: $('#description', this.el).val()
-#       project:
-#         name: $('#project', this.el).val()
-#       date: $('#date', this.el).val()
-#     new_task.save()
-#     this.old_list.collection.add new_task, at: 0
-#     this.old_list.render()
-#   render: () ->
-#     this.task_view.render(true)
-#     this.$el.html this.task_view.$el
-
-
-# task_list_view = new TaskListView el: $('.tasks-old ul')
-# task_edit_view = new TaskEditView el: $('.tasks-new')
-# task_edit_view.old_list = task_list_view
