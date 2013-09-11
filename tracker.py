@@ -142,10 +142,13 @@ def task_rest_to_data(incoming):
         cleaned['duration'] = int(incoming['duration'])
     except ValueError as ve:
         raise AssertionError('duration: {}'.format(ve))
-    try:
-        cleaned['date'] = dateutil.parser.parse(incoming['date'])
-    except ValueError as ve:
-        raise AssertionError(invalid('date: {}'.format(ve)))
+    if incoming['date'] is None:
+        cleaned['date'] = datetime.now()
+    else:
+        try:
+            cleaned['date'] = dateutil.parser.parse(incoming['date'])
+        except ValueError as ve:
+            raise AssertionError(invalid('date: {}'.format(ve)))
     if 'project' in incoming:
         project = get_or_create_project(incoming['project'])
     else:

@@ -2,19 +2,18 @@
 
 {% block content %}
 
-  <header>
-    <h1>track time</h1>
-    <p>blah blah blah</p>
-  </header>
-
   <div id="trackerapp">
 
+    <header>
+      <h1>track time</h1>
+    </header>
+
     <div id="task-form">
-      <input type="number" id="new-duration" />
-      <input type="text" id="new-description" />
-      <input type="text" id="new-project" />
-      <input type="date" id="new-date" />
-      <button id="save-new-task">save</button>
+      <input type="number" id="new-duration" placeholder="duration" />
+      <input type="text" id="new-description" placeholder="description" />
+      <input type="text" id="new-project" placeholder="project" />
+      <input type="date" id="new-date" placeholder="date" />
+      <button id="save-new-task">new</button>
     </div>
 
     <ul id="task-list">

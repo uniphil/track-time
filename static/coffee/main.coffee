@@ -2,13 +2,14 @@
 _.templateSettings = interpolate: /\{\{(.+?)\}\}/
 
 task_template = '' +
-  '<span class="task-duration">{{ duration }}</span>' +
-  '<span class="task-description">{{ description }}</span>' +
-  '<a class="task-project" href="#{{ project.href }}">' +
+  '<span class="task-thing task-duration">{{ duration }}</span>' +
+  '<span class="task-thing task-description">{{ description }}</span>' +
+  '<a class="task-thing task-project" href="#{{ project.href }}">' +
     '{{ project.name }}' +
   '</a>' +
   '<a class="task-edit" href="#edit-task">e</a>' +
-  '<a class="task-remove" href="#remove-task">&times;</a>'
+  '<a class="task-remove" href="#remove-task">&times;</a>' +
+  '<a class="task-update" href="#update-task">save</a>'
 
 
 Task = Backbone.Model.extend
@@ -52,7 +53,7 @@ TaskView = Backbone.View.extend
   events:
     'click .task-edit': 'edit'
     'click .task-remove': 'clear'
-    'click .task-save': 'close'
+    'click .task-update': 'close'
 
   initialize: () ->
     this.listenTo this.model, 'change', this.render
@@ -64,6 +65,7 @@ TaskView = Backbone.View.extend
 
   edit: () ->
     this.$el.addClass 'editing'
+    this.$('.task-thing').attr('contenteditable', 'true')
     this.$('.task-description').focus()
 
   close: () ->
@@ -73,6 +75,8 @@ TaskView = Backbone.View.extend
       duration: this.$('.task-duration').text()
       project:
         name: this.$('.task-project').text()
+    this.$el.removeClass 'editing'
+    this.$('.task-thing').attr('contenteditable', 'false')
 
   clear: () ->
     this.model.destroy()

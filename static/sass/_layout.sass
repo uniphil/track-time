@@ -1,0 +1,49 @@
+
+#trackerapp
+  padding: $base * 2
+
+#new-duration,
+.task-duration
+  width: 13%
+
+#new-description,
+.task-description
+  width: 37%
+
+#new-project,
+.task-project
+  width: 15%
+
+#new-date,
+.task-date
+  width: 23%
+
+#save-new-task,
+  width: 7%
+
+header,
+#task-form,
+#task-list
+  margin: $base 0
+
+#task-list li
+  padding: ($base / 2) 0
+  &:hover
+    background: $subtle
+
+  .task-edit,
+  .task-remove
+    display: inline
+  .task-update
+    display: none
+
+  &.editing
+    background: $subtle
+    .task-edit,
+    .task-remove
+      display: none
+    .task-update
+      display: inline
+
+.task-thing
+  display: inline-block
