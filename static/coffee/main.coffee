@@ -1,18 +1,7 @@
 
 _.templateSettings = interpolate: /\{\{(.+?)\}\}/
 
-task_edit_template = '' +
-  '<label for="duration">duration</label>
-  <input type="number" name="duration" id="duration" />
-  <label for="description">description</label>
-  <input type="text" name="description" id="description"/>
-  <label for="project">project</label>
-  <input type="text" name="project" id="project" />
-  <label for="date">date</label>
-  <input type="date" name="date" id="date" />
-  <button type="submit">save</button>'
-
-task_display_template = '' +
+task_template = '' +
   '<span class="task-duration">{{ duration }}</span>' +
   '<span class="task-description">{{ description }}</span>' +
   '<a class="task-project" href="#{{ project.href }}">' +
@@ -22,16 +11,19 @@ task_display_template = '' +
   '<a class="task-remove" href="#remove-task">&times;</a>'
 
 
-TaskModel = Backbone.Model.extend
+Task = Backbone.Model.extend
+
   urlRoot: '/tasks/'
   url: () -> this.id or this.urlRoot
   idAttribute: 'href'
-  defaults:
+
+  defaults: () ->
     date: new Date()
     description: ''
     duration: 0
     project:
       name: ''
+
   toJSON: () ->
     full = _.clone(this.attributes);
     full.project = full.project.name
@@ -39,69 +31,144 @@ TaskModel = Backbone.Model.extend
 
 
 TaskList = Backbone.Collection.extend
-  model: TaskModel
+
+  model: Task
+
   url: '/tasks/'
   parse: (data) -> data.tasks
 
+  comparator: 'date'
+
+
+Tasks = new TaskList
+
 
 TaskView = Backbone.View.extend
+
   tagName: 'li'
-  initialize: () ->
-    _.bindAll this, 'render', 'removeTask'
-    this.render()
+
+  template: _.template(task_template)
+
   events:
-    'click a[href="#remove-task"]': 'removeTask'
-  removeTask: () ->
-    this.model.destroy()
-  render: (edit) ->
-    template_str = if edit? then task_edit_template else task_display_template
-    compiled = _.template template_str
-    rendered = compiled this.model.attributes
-    this.$el.html rendered
+    'click .task-edit': 'edit'
+    'click .task-remove': 'remove'
+    'click .task-save': 'close'
 
-
-TaskListView = Backbone.View.extend
-  tagName: 'ul'
   initialize: () ->
-    _.bindAll this, 'render', 'taskRemoved'
-    this.collection = new TaskList()
-    this.collection.bind 'destroy', this.taskRemoved
-    this.collection.fetch success: this.render
-  taskRemoved: () ->
-    console.log 'task removed?'
-    this.render()
+    this.listenTo this.model, 'change', this.render
+    this.listenTo this.model, 'destroy', this.remove
+
   render: () ->
-    this.$el.empty()
-    self = this
-    this.collection.each (task) ->
-      view = new TaskView model: task
-      self.$el.append view.el
+    this.$el.html this.template this.model.attributes
+    return this
 
+  edit: () ->
+    this.$el.addClass 'editing'
+    this.$('.task-description').focus()
 
-TaskEditView = Backbone.View.extend
-  tagName: 'div'
-  task: null
-  initialize: () ->
-    _.bindAll this, 'render', 'addTask'
-    this.task_view = new TaskView model: new TaskModel()
-    this.render()
-  events:
-    'click button[type=submit]': 'addTask'
-  addTask: () ->
-    new_task = new TaskModel
-      duration: $('#duration', this.el).val()
-      description: $('#description', this.el).val()
+  close: () ->
+    this.model.save
+      date: this.$('.task-date').text()
+      description: this.$('.task-description').text()
+      duration: this.$('.task-duration').text()
       project:
-        name: $('#project', this.el).val()
-      date: $('#date', this.el).val()
-    new_task.save()
-    this.old_list.collection.add new_task, at: 0
-    this.old_list.render()
+        name: this.$('.task-project').text()
+
+  remove: () ->
+    this.model.destroy()
+
+
+AppView = Backbone.View.extend
+
+  el: $('#trackerapp')
+
+  events:
+    'click #save-new-task': 'save_new'
+
+  initialize: () ->
+    this.new_form =
+      duration: this.$("#new-duration")
+      description: this.$("#new-description")
+      date: this.$("#new-date")
+      project: this.$("#new-project")
+
+    this.listenTo Tasks, 'add', this.add_one
+    this.listenTo Tasks, 'reset', this.add_all
+    this.listenTo Tasks, 'all', this.render
+
+    this.main = $("#main")
+
+    Tasks.fetch()
+
   render: () ->
-    this.task_view.render(true)
-    this.$el.html this.task_view.$el
+    if Tasks.length
+      this.main.show()
+    else
+      this.main.hide()
+
+  add_one: (task) ->
+    view = new TaskView model: task
+    this.$("#task-list").append view.render().el
+
+  add_all: () ->
+    Tasks.each this.add_one, this
+
+  save_new: () ->
+    Tasks.create
+      duration: this.new_form.duration.val()
+      description: this.new_form.description.val()
+      date: this.new_form.date.val()
+      project:
+        name: this.new_form.project.val()
 
 
-task_list_view = new TaskListView el: $('.tasks-old ul')
-task_edit_view = new TaskEditView el: $('.tasks-new')
-task_edit_view.old_list = task_list_view
+App = new AppView
+
+
+
+
+# TaskListView = Backbone.View.extend
+#   tagName: 'ul'
+#   initialize: () ->
+#     _.bindAll this, 'render', 'taskRemoved'
+#     this.collection = new TaskList()
+#     this.collection.bind 'destroy', this.taskRemoved
+#     this.collection.fetch success: this.render
+#   taskRemoved: () ->
+#     console.log 'task removed?'
+#     this.render()
+#   render: () ->
+#     this.$el.empty()
+#     self = this
+#     this.collection.each (task) ->
+#       view = new TaskView model: task
+#       self.$el.append view.el
+
+
+# TaskEditView = Backbone.View.extend
+#   tagName: 'div'
+#   task: null
+#   initialize: () ->
+#     _.bindAll this, 'render', 'addTask'
+#     this.task_view = new TaskView model: new Task()
+#     this.render()
+#   events:
+#     'click button[type=submit]': 'addTask'
+#   addTask: () ->
+#     new_task = new Task
+#       duration: $('#duration', this.el).val()
+#       description: $('#description', this.el).val()
+#       project:
+#         name: $('#project', this.el).val()
+#       date: $('#date', this.el).val()
+#     new_task.save()
+#     this.old_list.collection.add new_task, at: 0
+#     this.old_list.render()
+#   render: () ->
+#     this.task_view.render(true)
+#     this.$el.html this.task_view.$el
+
+
+# task_list_view = new TaskListView el: $('.tasks-old ul')
+# task_edit_view = new TaskEditView el: $('.tasks-new')
+# task_edit_view.old_list = task_list_view

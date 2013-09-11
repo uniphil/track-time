@@ -7,13 +7,19 @@
     <p>blah blah blah</p>
   </header>
 
-  <section class="tasks">
-    <div class="tasks-new">
+  <div id="trackerapp">
+
+    <div id="task-form">
+      <input type="number" id="new-duration" />
+      <input type="text" id="new-description" />
+      <input type="text" id="new-project" />
+      <input type="date" id="new-date" />
+      <button id="save-new-task">save</button>
     </div>
-    <div class="tasks-old">
-      <ul>
-      </ul>
-    </div>
-  </section>
+
+    <ul id="task-list">
+    </ul>
+
+  </div>
 
 {% endblock %}
