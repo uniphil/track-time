@@ -1,16 +1,6 @@
 
 _.templateSettings = interpolate: /\{\{(.+?)\}\}/
 
-task_template = '' +
-  '<span class="task-thing task-duration">{{ duration }}</span>' +
-  '<span class="task-thing task-description">{{ description }}</span>' +
-  '<a class="task-thing task-project" href="#{{ project.href }}">' +
-    '{{ project.name }}' +
-  '</a>' +
-  '<a class="task-edit" href="#edit-task">e</a>' +
-  '<a class="task-remove" href="#remove-task">&times;</a>' +
-  '<a class="task-update" href="#update-task">save</a>'
-
 
 Task = Backbone.Model.extend
 
@@ -48,7 +38,7 @@ TaskView = Backbone.View.extend
 
   tagName: 'li'
 
-  template: _.template(task_template)
+  template: _.template $('#task-template').html()
 
   events:
     'click .task-edit': 'edit'
@@ -60,7 +50,9 @@ TaskView = Backbone.View.extend
     this.listenTo this.model, 'destroy', this.remove
 
   render: () ->
-    this.$el.html this.template this.model.attributes
+    nice_attributes = _.clone(this.model.attributes)
+    nice_attributes.duration /= 60
+    this.$el.html this.template nice_attributes
     return this
 
   edit: () ->
@@ -72,7 +64,7 @@ TaskView = Backbone.View.extend
     this.model.save
       date: this.$('.task-date').text()
       description: this.$('.task-description').text()
-      duration: this.$('.task-duration').text()
+      duration: this.$('.task-duration').text() * 60
       project:
         name: this.$('.task-project').text()
     this.$el.removeClass 'editing'
@@ -119,7 +111,7 @@ AppView = Backbone.View.extend
 
   save_new: () ->
     Tasks.create
-      duration: this.new_form.duration.val()
+      duration: this.new_form.duration.val() * 60
       description: this.new_form.description.val()
       date: this.new_form.date.val()
       project:

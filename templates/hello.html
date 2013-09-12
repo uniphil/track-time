@@ -12,13 +12,26 @@
       <input type="number" id="new-duration" placeholder="duration" />
       <input type="text" id="new-description" placeholder="description" />
       <input type="text" id="new-project" placeholder="project" />
-      <input type="date" id="new-date" placeholder="date" />
+      <!-- <input type="date" id="new-date" placeholder="date" /> -->
       <button id="save-new-task">new</button>
     </div>
 
     <ul id="task-list">
     </ul>
 
+  </div>
+
+  <div id="templates">
+    {% raw %}
+    <div id="task-template">
+      <span class="task-thing task-duration">{{ duration }}</span>
+      <span class="task-thing task-description">{{ description }}</span>
+      <a class="task-thing task-project" href="#{{ project.href }}">{{ project.name }}</a>
+      <a class="task-edit" href="#edit-task">e</a>
+      <a class="task-remove" href="#remove-task">&times;</a>
+      <a class="task-update" href="#update-task">save</a>
+    </div>
+    {% endraw %}
   </div>
 
 {% endblock %}
