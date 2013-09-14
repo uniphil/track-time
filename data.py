@@ -24,7 +24,7 @@ from config import data_config
 class NotFoundError(ValueError): pass
 
 
-client = MongoClient(**data_config['mongoclient'])
+client = MongoClient(data_config['mongo_uri'])
 db = client[data_config['dbname']]
 
 

@@ -14,6 +14,9 @@
     copyright: whatever 2013
 """
 
+import os
+
+
 __all__ = ('configure_app', 'data_config')
 
 
@@ -21,7 +24,7 @@ def configure_app(app):
     app.debug = True
 
 
-data_config = dict(mongoclient={},
-                   dbname='timetracker')
+data_config = dict(mongo_uri=os.environ.get('MONGO_URI', ''),
+                   dbname='tracktime')
                    # tasks_collection='tasks'
                    # projects_collection='projects'
