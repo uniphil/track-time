@@ -29,7 +29,6 @@ db = client[data_config['dbname']]
 
 
 class MongoStore(object):
-
     def __init__(self, collection_name):
         self.collection = db[collection_name]
 
