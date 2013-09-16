@@ -70,7 +70,7 @@ html {
 @media (min-width: 768px) {
   /* line 1, ../sass/_variables.sass */
   html {
-    font-size: 1.5em;
+    font-size: 1.2em;
   }
 }
 
@@ -92,7 +92,7 @@ h6 {
 
 /* line 14, ../sass/_type.sass */
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin: 1em 0;
 }
 
@@ -102,6 +102,14 @@ button,
 p {
   font-size: 1rem;
   line-height: 1.618em;
+}
+
+/* line 24, ../sass/_type.sass */
+.task-project {
+  font-size: 0.667em;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-weight: bold;
 }
 
 /* line 2, ../sass/_layout.sass */

@@ -2,6 +2,16 @@
 _.templateSettings = interpolate: /\{\{(.+?)\}\}/
 
 
+colour_map = _.memoize (name) ->
+  hash = 360
+  mash = (char) ->
+    # sdbm
+    n = char.charCodeAt 0
+    hash = n + (hash << 6) + (hash << 16) - hash
+  mash char for char in name
+  $.husl.p.toHex (hash % 360), 100, 58
+
+
 Task = Backbone.Model.extend
 
   urlRoot: '/tasks/'
@@ -53,6 +63,9 @@ TaskView = Backbone.View.extend
     nice_attributes = _.clone(this.model.attributes)
     nice_attributes.duration /= 60
     this.$el.html this.template nice_attributes
+    project_colour = colour_map nice_attributes.project.name
+    $('.task-project', this.el).css color: project_colour
+    $(':hover', )
     return this
 
   edit: () ->
@@ -117,7 +130,7 @@ AppView = Backbone.View.extend
       project:
         name: this.new_form.project.val()
     _(this.new_form).each (thing) ->
-      thing.val('')
+      thing.val ''
 
 
 
