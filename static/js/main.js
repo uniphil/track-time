@@ -77,6 +77,11 @@
           return 1;
         }
       }
+    },
+    project: function(name) {
+      return this.filter(function(task) {
+        return task.get('project').name === name;
+      });
     }
   });
 
@@ -86,7 +91,8 @@
     events: {
       'click .task-edit': 'edit',
       'click .task-remove': 'clear',
-      'click .task-update': 'close'
+      'click .task-update': 'close',
+      'click .task-project': 'filter'
     },
     initialize: function() {
       this.listenTo(this.model, 'change', this.render);
@@ -122,6 +128,9 @@
     },
     clear: function() {
       return this.model.destroy();
+    },
+    filter: function() {
+      return App.filter_project(this.model.get('project').name);
     }
   });
 
@@ -129,14 +138,16 @@
     el: $('#trackerapp'),
     events: {
       'click #save-new-task': 'save_new',
-      'keypress form': 'save_on_enter'
+      'keypress form': 'save_on_enter',
+      'click .filter-projects': 'unfilter'
     },
     initialize: function() {
-      _.bindAll(this, 'add_task', 'add_all', 'render');
+      _.bindAll(this, 'show_task', 'show_task_list', 'filter_project', 'render');
       this.collection = new TaskList;
-      this.collection.bind('sort', this.add_all);
+      this.collection.bind('sort', this.show_task_list);
       this.collection.bind('remove', this.render);
       this.collection.bind('change:duration', this.render);
+      this.project_filter = null;
       this.new_form = {
         duration: this.$("#new-duration"),
         description: this.$("#new-description"),
@@ -146,13 +157,18 @@
       return this.collection.fetch();
     },
     render: function() {
-      var duration;
-      duration = this.collection.reduce((function(m, v) {
+      var duration, tasks;
+      if (this.project_filter === null) {
+        tasks = this.collection;
+      } else {
+        tasks = _(this.collection.project(this.project_filter));
+      }
+      duration = tasks.reduce((function(m, v) {
         return m + v.attributes.duration;
       }), 0);
       return $('.stats-minutes', this.el).text(duration / 60);
     },
-    add_task: function(task) {
+    show_task: function(task) {
       var view;
       view = new TaskView({
         model: task
@@ -160,9 +176,15 @@
       this.$("#task-list").append(view.render().el);
       return this.render();
     },
-    add_all: function() {
+    show_task_list: function() {
+      var tasks;
+      if (this.project_filter === null) {
+        tasks = this.collection;
+      } else {
+        tasks = _(this.collection.project(this.project_filter));
+      }
       this.$('#task-list').html('');
-      return this.collection.each(this.add_task, this);
+      return tasks.each(this.show_task, this);
     },
     save_on_enter: function(e) {
       if (e.keyCode === 13) {
@@ -182,6 +204,16 @@
       return _(this.new_form).each(function(thing) {
         return thing.val('');
       });
+    },
+    filter_project: function(name) {
+      this.project_filter = name;
+      this.$('.filter-projects').text(name);
+      return this.show_task_list();
+    },
+    unfilter: function() {
+      this.project_filter = null;
+      this.$('.filter-projects').text('everything');
+      return this.show_task_list();
     }
   });
 
