@@ -92,7 +92,7 @@ h6 {
 
 /* line 14, ../sass/_type.sass */
 h1 {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   margin: 1em 0;
 }
 
@@ -105,11 +105,22 @@ p {
 }
 
 /* line 24, ../sass/_type.sass */
+a {
+  text-decoration: none;
+}
+
+/* line 27, ../sass/_type.sass */
 .task-project {
   font-size: 0.667em;
   text-transform: uppercase;
-  text-decoration: none;
   font-weight: bold;
+}
+
+/* line 32, ../sass/_type.sass */
+#trackerstats p,
+#time-filter p {
+  font-size: 0.8em;
+  color: #777777;
 }
 
 /* line 2, ../sass/_layout.sass */
@@ -120,65 +131,63 @@ p {
 /* line 5, ../sass/_layout.sass */
 #new-duration,
 .task-duration {
-  width: 16%;
+  width: 10%;
 }
 
 /* line 9, ../sass/_layout.sass */
 #new-description,
 .task-description {
-  width: 47%;
+  width: 60%;
 }
 
 /* line 13, ../sass/_layout.sass */
 #new-project,
 .task-project {
-  width: 19%;
+  width: 20%;
 }
 
-/* line 21, ../sass/_layout.sass */
+/* line 17, ../sass/_layout.sass */
 #save-new-task {
-  width: 8%;
+  width: 9%;
 }
 
-/* line 24, ../sass/_layout.sass */
+/* line 20, ../sass/_layout.sass */
 header,
 #task-form,
 #task-list {
   margin: 1rem 0;
 }
 
-/* line 29, ../sass/_layout.sass */
+/* line 25, ../sass/_layout.sass */
 #task-list li {
   padding: 0.5rem 0;
 }
-/* line 31, ../sass/_layout.sass */
-#task-list li:hover {
-  background: rgba(244, 244, 100, 0.4);
-}
-/* line 34, ../sass/_layout.sass */
+/* line 27, ../sass/_layout.sass */
 #task-list li .task-edit,
-#task-list li .task-remove {
-  display: inline;
-}
-/* line 37, ../sass/_layout.sass */
+#task-list li .task-remove,
 #task-list li .task-update {
   display: none;
 }
-/* line 40, ../sass/_layout.sass */
-#task-list li.editing {
-  background: rgba(244, 244, 100, 0.4);
+/* line 33, ../sass/_layout.sass */
+#task-list li:hover .task-edit,
+#task-list li:hover .task-remove {
+  display: inline;
 }
-/* line 42, ../sass/_layout.sass */
+/* line 37, ../sass/_layout.sass */
+#task-list li.editing {
+  background: rgba(222, 222, 222, 0.4);
+}
+/* line 39, ../sass/_layout.sass */
 #task-list li.editing .task-edit,
 #task-list li.editing .task-remove {
   display: none;
 }
-/* line 45, ../sass/_layout.sass */
+/* line 42, ../sass/_layout.sass */
 #task-list li.editing .task-update {
   display: inline;
 }
 
-/* line 48, ../sass/_layout.sass */
+/* line 45, ../sass/_layout.sass */
 .task-thing {
   display: inline-block;
 }
@@ -194,15 +203,21 @@ button {
   margin: 0;
   padding: 0;
   border: 0;
-  border-bottom: 1px dashed rgba(244, 244, 100, 0.4);
+  border-bottom: 1px dotted #aaaaaa;
 }
 /* line 12, ../sass/_style.sass */
 input:hover,
 button:hover {
-  background: rgba(244, 244, 100, 0.4);
+  background: rgba(222, 222, 222, 0.4);
 }
 
 /* line 15, ../sass/_style.sass */
 button {
-  background: rgba(244, 244, 100, 0.4);
+  background: rgba(222, 222, 222, 0.4);
+}
+
+/* line 18, ../sass/_style.sass */
+span:focus,
+a:focus {
+  outline: none;
 }

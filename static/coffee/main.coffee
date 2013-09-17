@@ -27,7 +27,9 @@ Task = Backbone.Model.extend
 
   toJSON: () ->
     full = _.clone(this.attributes);
-    full.project = full.project.name
+    full.project = this.get('project').name
+    if full.date
+      full.date = this.get('date').toISOString()
     return full
 
 
@@ -36,12 +38,25 @@ TaskList = Backbone.Collection.extend
   model: Task
 
   url: '/tasks/'
-  parse: (data) -> data.tasks
+  parse: (data) ->
+    tasks = data.tasks
+    _(tasks).each (thing) ->
+      thing.date = new Date(thing.date)
+      thing.recorded = new Date(thing.recorded)
+    return tasks
 
-  comparator: 'date'
+  comparator: (a, b) ->
+    a_date = a.get('date').getTime()
+    b_date = b.get('date').getTime()
+    if a_date > b_date
+      return -1
+    else if a_date < b_date
+      return 1
+    else
+      a_recorded = a.get('recorded').getTime()
+      b_recorded = b.get('recorded').getTime()
+      if a_recorded > b_recorded then -1 else 1
 
-
-Tasks = new TaskList
 
 
 TaskView = Backbone.View.extend
@@ -65,7 +80,6 @@ TaskView = Backbone.View.extend
     this.$el.html this.template nice_attributes
     project_colour = colour_map nice_attributes.project.name
     $('.task-project', this.el).css color: project_colour
-    $(':hover', )
     return this
 
   edit: () ->
@@ -93,37 +107,47 @@ AppView = Backbone.View.extend
 
   events:
     'click #save-new-task': 'save_new'
+    'keypress form': 'save_on_enter'
 
   initialize: () ->
+    _.bindAll(this, 'add_task', 'add_all', 'render')
+    this.collection = new TaskList
+    this.collection.bind 'sort', this.add_all
+    this.collection.bind 'remove', this.render
+    this.collection.bind 'change:duration', this.render
+
     this.new_form =
       duration: this.$("#new-duration")
       description: this.$("#new-description")
       date: this.$("#new-date")
       project: this.$("#new-project")
 
-    this.listenTo Tasks, 'add', this.add_one
-    this.listenTo Tasks, 'reset', this.add_all
-    this.listenTo Tasks, 'all', this.render
+    # this.listenTo this.collection, 'add', this.render
+    # this.listenTo this.collection, 'reset', this.render
+    # this.listenTo this.collection, 'all', this.render
 
-    this.main = $("#main")
-
-    Tasks.fetch()
+    this.collection.fetch()
 
   render: () ->
-    if Tasks.length
-      this.main.show()
-    else
-      this.main.hide()
+    duration = this.collection.reduce ((m, v) -> m + v.attributes.duration), 0
+    $('.stats-minutes', this.el).text duration / 60
 
-  add_one: (task) ->
+  add_task: (task) ->
     view = new TaskView model: task
     this.$("#task-list").append view.render().el
+    this.render()
 
   add_all: () ->
-    Tasks.each this.add_one, this
+    this.$('#task-list').html ''
+    this.collection.each this.add_task, this
+
+  save_on_enter: (e) ->
+    if e.keyCode == 13
+      this.save_new()
+      $('#new-duration', this.el).focus()
 
   save_new: () ->
-    Tasks.create
+    this.collection.create
       duration: this.new_form.duration.val() * 60
       description: this.new_form.description.val()
       date: this.new_form.date.val()
@@ -133,6 +157,5 @@ AppView = Backbone.View.extend
       thing.val ''
 
 
-
-App = new AppView
+window.App = new AppView
 

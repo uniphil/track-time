@@ -4,23 +4,32 @@
 
   <div id="trackerapp">
 
-    <header>
-      <h1>track time</h1>
-    </header>
+    <div id="time-filter">
+      <p>
+        Tasks completed
+        <a class="filter filter-end" href="#">today</a>
+        since
+        <a class="filter filter-start" href="#">yesterday</a>
+        on
+        <a class="filter filter-projects" href="#">everything</a>
+        took
+        <span class="stats-minutes">0</span>
+        minutes.
+      </p>
+    </div>
 
     <div id="task-form">
-      <input type="number" id="new-duration" placeholder="duration" />
-      <input type="text" id="new-description" placeholder="description" />
-      <input type="text" id="new-project" placeholder="project" />
-      <!-- <input type="date" id="new-date" placeholder="date" /> -->
-      <button id="save-new-task">new</button>
+      <form action="#", method="post">
+        <input type="text" id="new-duration" placeholder="time" />
+        <input type="text" id="new-project" placeholder="project" />
+        <input type="text" id="new-description" placeholder="description" />
+        <!-- <input type="date" id="new-date" placeholder="date" /> -->
+        <!-- <button id="save-new-task">new</button> -->
+      </form>
     </div>
 
     <ul id="task-list">
     </ul>
-
-    <div id="colour-test">
-    </div>
 
   </div>
 
@@ -28,8 +37,8 @@
     {% raw %}
     <div id="task-template">
       <span class="task-thing task-duration">{{ duration }}</span>
-      <span class="task-thing task-description">{{ description }}</span>
       <a class="task-thing task-project" href="#{{ project.href }}">{{ project.name }}</a>
+      <span class="task-thing task-description">{{ description }}</span>
       <a class="task-edit" href="#edit-task">e</a>
       <a class="task-remove" href="#remove-task">&times;</a>
       <a class="task-update" href="#update-task">save</a>

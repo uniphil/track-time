@@ -170,6 +170,8 @@ def task_data_to_rest(outgoing):
         href = url_for('projects.get', id=str(oid))
         project = {'name': cleaned['project']['name'], 'href': href}
     cleaned['project'] = project
+    cleaned['date'] = cleaned.pop('date').isoformat()
+    cleaned['recorded'] = cleaned.pop('recorded').isoformat()
     return cleaned
 
 @tasks_resource.autometa

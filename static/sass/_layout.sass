@@ -4,22 +4,18 @@
 
 #new-duration,
 .task-duration
-  width: 16%
+  width: 10%
 
 #new-description,
 .task-description
-  width: 47%
+  width: 60%
 
 #new-project,
 .task-project
-  width: 19%
-
-// #new-date,
-// .task-date
-//   width: 23%
+  width: 20%
 
 #save-new-task,
-  width: 8%
+  width: 9%
 
 header,
 #task-form,
@@ -28,14 +24,15 @@ header,
 
 #task-list li
   padding: ($base / 2) 0
-  &:hover
-    background: $subtle
-
   .task-edit,
-  .task-remove
-    display: inline
+  .task-remove,
   .task-update
     display: none
+
+  &:hover
+    .task-edit,
+    .task-remove
+      display: inline
 
   &.editing
     background: $subtle
