@@ -107,16 +107,17 @@ p {
 /* line 24, ../sass/_type.sass */
 a {
   text-decoration: none;
+  color: #6488c9;
 }
 
-/* line 27, ../sass/_type.sass */
+/* line 28, ../sass/_type.sass */
 .task-project {
   font-size: 0.667em;
   text-transform: uppercase;
   font-weight: bold;
 }
 
-/* line 32, ../sass/_type.sass */
+/* line 33, ../sass/_type.sass */
 #trackerstats p,
 #time-filter p {
   font-size: 0.8em;
