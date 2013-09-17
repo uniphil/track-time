@@ -65,12 +65,12 @@ article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, 
 
 /* line 1, ../sass/_variables.sass */
 html {
-  font-size: 1em;
+  font-size: 0.8em;
 }
 @media (min-width: 768px) {
   /* line 1, ../sass/_variables.sass */
   html {
-    font-size: 1.2em;
+    font-size: 1em;
   }
 }
 
